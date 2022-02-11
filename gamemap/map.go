@@ -7,6 +7,11 @@ type warehouseMap struct {
 	NbIter uint32
 }
 
+func readFile(file string) {
+
+	return
+}
+
 func newWarehouseMap(file string) *warehouseMap {
 	w := warehouseMap{X: 4, Y: 4, NbIter: 1000}
 	return &w
