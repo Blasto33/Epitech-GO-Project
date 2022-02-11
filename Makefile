@@ -1,14 +1,31 @@
 BINARY_NAME=Go_Project
+UNAME_S := $(shell uname -s)
+
+ifdef OS
+   RM = del /Q
+   FixPath = $(subst /,\,$1)
+else
+   ifeq ($(shell uname), Linux)
+      RM = rm -f
+      FixPath = $1
+   endif
+endif
 
 build:
 	@echo Building in Progress
 	@echo --------------${\n}
-	go env -w GOARCH=amd64 GOOS=darwin
-	go build -o ${BINARY_NAME}-darwin main.go
-	go env -w GOARCH=amd64 GOOS=linux
-	go build -o ${BINARY_NAME}-linux main.go
-	go env -w GOARCH=amd64 GOOS=windows
-	go build -o ${BINARY_NAME}-windows.exe main.go
+	ifeq ($(OS),Windows_NT)
+		go env -w GOARCH=amd64 GOOS=windows
+		go build -o ${BINARY_NAME}-windows.exe main.go
+	endif
+	ifeq ($(UNAME_S),Linux)
+		go env -w GOARCH=amd64 GOOS=linux
+		go build -o ${BINARY_NAME}-linux main.go
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		go env -w GOARCH=amd64 GOOS=darwin 
+		go build -o ${BINARY_NAME}-darwin main.go
+	endif
 	@echo --------------${\n}
 	@echo "Building Done"
 
@@ -19,9 +36,9 @@ build_run: build run
 
 clean:
 	go clean
-	del ${BINARY_NAME}-darwin
-	del ${BINARY_NAME}-linux
-	del ${BINARY_NAME}-windows.exe
+	${RM} ${BINARY_NAME}-darwin
+	${RM} ${BINARY_NAME}-linux
+	${RM} ${BINARY_NAME}-windows.exe
 	@echo "Cleaning ${BINARY_NAME}"
 
 test:
