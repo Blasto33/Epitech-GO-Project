@@ -13,9 +13,9 @@ build:
 	@echo "Building Done"
 
 run:
-	./${BINARY_NAME}-windows
+	./${BINARY_NAME}-linux
 
-build_and_run: build run
+build_run: build run
 
 clean:
 	go clean
@@ -45,4 +45,6 @@ vet:
 	go vet
 
 lint:
-	golangci-lint run --enable-all
+	golangci-lint run
+
+re:		clean build
