@@ -11,10 +11,6 @@ else
    endif
 endif
 
-ifeq '$(findstring ;,$(PATH))' ';'
-	detected_OS := Windows
-endif
-
 build:
 	@echo Building in Progress
 	@echo --------------${\n}
