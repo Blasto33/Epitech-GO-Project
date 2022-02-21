@@ -56,6 +56,23 @@ func colorWeight(weight uint16) string {
 	return "YELLOW"
 }
 
+// isEmpty know if there is no more packet left
+func (a algorithm) isEmpty() bool {
+	for _, i := range a.TwoDMap {
+		for _, j := range i {
+			if j == 2 {
+				return false
+			}
+		}
+	}
+	for _, pal := range a.Listpal {
+		if pal.Carry {
+			return false
+		}
+	}
+	return true
+}
+
 func (a algorithm) createMap() {
 	for i := 0; i < int(a.Ware.X); i++ {
 		for j := 0; j < int(a.Ware.Y); j++ {
@@ -82,31 +99,39 @@ func (a algorithm) findPacket(x uint16, y uint16) *packet {
 	return nil
 }
 
+func (a algorithm) makePalMove(palIndex int, destX uint16, destY uint16) bool {
+	tmp := a.Listpal[palIndex]
+	if (a.Listpal[palIndex].X < destX) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 0) {
+		a.Listpal[palIndex].X++
+	} else if (a.Listpal[palIndex].Y < destY) && (a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 0) {
+		a.Listpal[palIndex].Y++
+	}
+	if (a.Listpal[palIndex].X > destX) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 0) {
+		a.Listpal[palIndex].X--
+	} else if (a.Listpal[palIndex].Y < destY) && (a.TwoDMap[a.Listpal[palIndex].Y-1][a.Listpal[palIndex].X] == 0) {
+		a.Listpal[palIndex].Y--
+	}
+	return tmp == a.Listpal[palIndex]
+}
+
 func (a algorithm) gotopacket(palIndex int, packIndex int) {
 	var ptr *packet
 	if a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y, a.Listpal[palIndex].X+1)
 	} else if a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y+1, a.Listpal[palIndex].X)
-	} else if a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 2 {
+	}
+	if a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y, a.Listpal[palIndex].X-1)
 	} else if a.TwoDMap[a.Listpal[palIndex].Y-1][a.Listpal[palIndex].X] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y-1, a.Listpal[palIndex].X)
 	}
 	if ptr == nil {
-		if (a.Listpal[palIndex].Y < a.Listtruck[packIndex].Y) && (a.TwoDMap[a.Listpal[palIndex].Y-1][a.Listpal[palIndex].X] == 0) {
-			a.Listpal[palIndex].Y--
-		} else if (a.Listpal[palIndex].X > a.Listtruck[packIndex].X) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 0) {
-			a.Listpal[palIndex].X--
-		} else if (a.Listpal[palIndex].Y < a.Listtruck[packIndex].Y) && (a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 0) {
-			a.Listpal[palIndex].Y++
-		} else if (a.Listpal[palIndex].X < a.Listtruck[packIndex].X) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 0) {
-			a.Listpal[palIndex].X++
-		} else {
+		if !a.makePalMove(palIndex, a.Listpacket[packIndex].Y, a.Listpacket[packIndex].X) {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
-			return
+		} else {
+			a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
 		}
-		a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
 	} else {
 		a.TwoDMap[ptr.X][ptr.Y] = 0
 		remove(a.Listpacket, ptr)
@@ -127,38 +152,63 @@ func (a algorithm) gototruck(palIndex int, truckIndex int) {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
 		}
 	} else {
-		if (a.Listpal[palIndex].X < a.Listtruck[truckIndex].X) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 0) {
-			a.Listpal[palIndex].X++
-		} else if (a.Listpal[palIndex].Y < a.Listtruck[truckIndex].Y) && (a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 0) {
-			a.Listpal[palIndex].Y++
-		} else if (a.Listpal[palIndex].X > a.Listtruck[truckIndex].X) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 0) {
-			a.Listpal[palIndex].X--
-		} else if (a.Listpal[palIndex].Y < a.Listtruck[truckIndex].Y) && (a.TwoDMap[a.Listpal[palIndex].Y-1][a.Listpal[palIndex].X] == 0) {
-			a.Listpal[palIndex].Y--
-		} else {
+		if !a.makePalMove(palIndex, a.Listtruck[truckIndex].X, a.Listtruck[truckIndex].Y) {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
-			return
+		} else {
+			a.TwoDMap[a.Listpal[palIndex].X][a.Listpal[palIndex].Y] = 1
+			a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
 		}
-		a.TwoDMap[a.Listpal[palIndex].X][a.Listpal[palIndex].Y] = 1
-		a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
 	}
 }
 
-// isEmpty know if there is no more packet left
-func (a algorithm) isEmpty() bool {
-	for _, i := range a.TwoDMap {
-		for _, j := range i {
-			if j == 2 {
-				return false
+func (a algorithm) printTruck() {
+	for _, truck := range a.Listtruck {
+		if truck.Round > 0 {
+			truck.Round--
+			fmt.Printf("%s GONE %d/%d", truck.Name, truck.Content, truck.MaxContent)
+			if truck.Round == 0 {
+				truck.Content = 0
 			}
+			continue
+		}
+		if (truck.MaxContent-truck.Content < 500 && truck.MaxContent > 500) || a.isEmpty() {
+			truck.Round = truck.MaxRound
+			fmt.Printf("%s GONE %d/%d", truck.Name, truck.Content, truck.MaxContent)
+		} else {
+			fmt.Printf("%s WAITING %d/%d", truck.Name, truck.Content, truck.MaxContent)
+		}
+	}
+}
+
+func (a algorithm) printPal() {
+	move := make([]int, 0)
+	for packindex := 0; packindex < len(a.Listpacket); packindex++ {
+		distance := a.Ware.X * a.Ware.Y
+		tmp := getPal(int(distance), a.Listpacket[packindex], a.Listpal)
+		if tmp != -1 {
+			move = append(move, tmp)
+			a.gotopacket(tmp, packindex)
+		}
+	}
+	for palindex := 0; palindex < len(a.Listpal); palindex++ {
+		if Find(move, palindex) || !a.Listpal[palindex].Carry {
+			continue
+		}
+		distance := a.Ware.X * a.Ware.Y
+		tmp := getTruck(int(distance), a.Listpal[palindex], a.Listtruck)
+		if tmp != -1 {
+			move = append(move, tmp)
+			a.gototruck(palindex, tmp)
+		}
+	}
+	for palindex := 0; palindex < len(a.Listpal); palindex++ {
+		if !Find(move, palindex) {
+			a.Listpal[palindex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palindex].Name)
 		}
 	}
 	for _, pal := range a.Listpal {
-		if pal.Carry {
-			return false
-		}
+		fmt.Printf(pal.Command)
 	}
-	return true
 }
 
 // Abs get the absolute value of a int
@@ -213,50 +263,10 @@ func executeAlgorithm(warehouse warehouseMap) bool {
 	algo := algorithm{Ware: warehouse, TwoDMap: make([][]uint8, warehouse.Y, warehouse.X)}
 	for i := 0; i < int(algo.Ware.NbIter); i++ {
 		algo.createMap()
-		move := make([]int, 0)
 		fmt.Printf("tour %d\n", i+1)
 		fmt.Printf("\n")
-		for packindex := 0; packindex < len(algo.Listpacket); packindex++ {
-			distance := algo.Ware.X * algo.Ware.Y
-			tmp := getPal(int(distance), algo.Listpacket[packindex], algo.Listpal)
-			if tmp != -1 {
-				move = append(move, tmp)
-				algo.gotopacket(tmp, packindex)
-			}
-		}
-		for palindex := 0; palindex < len(algo.Listpal); palindex++ {
-			if Find(move, palindex) || !algo.Listpal[palindex].Carry {
-				continue
-			}
-			distance := algo.Ware.X * algo.Ware.Y
-			tmp := getTruck(int(distance), algo.Listpal[palindex], algo.Listtruck)
-			if tmp != -1 {
-				move = append(move, tmp)
-				algo.gototruck(palindex, tmp)
-			}
-		}
-		for palindex := 0; palindex < len(algo.Listpal); palindex++ {
-			if !Find(move, palindex) {
-				algo.Listpal[palindex].Command = fmt.Sprintf("%s WAIT\n", algo.Listpal[palindex].Name)
-			}
-		}
-		for _, pal := range algo.Listpal {
-			fmt.Printf(pal.Command)
-		}
-		for _, truck := range algo.Listtruck {
-			if truck.Round > 0 {
-				truck.Round--
-				fmt.Printf("%s GONE %d/%d", truck.Name, truck.Content, truck.MaxContent)
-				if truck.Round == 0 {
-					truck.Content = 0
-				}
-			} else if (truck.MaxContent-truck.Content < 500 && truck.MaxContent > 500) || algo.isEmpty() {
-				truck.Round = truck.MaxRound
-				fmt.Printf("%s GONE %d/%d", truck.Name, truck.Content, truck.MaxContent)
-			} else {
-				fmt.Printf("%s WAITING %d/%d", truck.Name, truck.Content, truck.MaxContent)
-			}
-		}
+		algo.printPal()
+		algo.printTruck()
 	}
 	return algo.isEmpty()
 }
