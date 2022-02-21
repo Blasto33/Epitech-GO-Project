@@ -11,43 +11,51 @@ else
    endif
 endif
 
-ifeq '$(findstring ;,$(PATH))' ';'
-	detected_OS := Windows
-endif
-
 build:
 	@echo Building in Progress
 	@echo --------------${\n}
 ifeq (${OS}, Windows_NT)
 	go env -w GOARCH=amd64 GOOS=windows
 	go build -o ${BINARY_NAME}-windows.exe main.go
-else 
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		go env -w GOARCH=amd64 GOOS=linux
-		go build -o ${BINARY_NAME}-linux main.go
-	
-	else
-		UNAME_S := $(shell uname -s)
-		ifeq ($(UNAME_S),Darwin)
-			go env -w GOARCH=amd64 GOOS=darwin 
-			go build -o ${BINARY_NAME}-darwin main.go
-		endif
-	endif
+else
+ifeq ($(shell uname -s),Linux)
+	go env -w GOARCH=amd64 GOOS=linux
+	go build -o ${BINARY_NAME}-linux main.go
+endif
+ifeq ($(shell uname -s),Darwin)
+	go env -w GOARCH=amd64 GOOS=darwin 
+	go build -o ${BINARY_NAME}-darwin main.go
+endif
 endif
 	@echo --------------${\n}
 	@echo "Building Done"
 
 run:
+ifeq (${OS}, Windows_NT)
+	./${BINARY_NAME}-windows.exe
+else
+ifeq ($(shell uname -s),Linux)
 	./${BINARY_NAME}-linux
+endif
+ifeq ($(shell uname -s),Darwin)
+	./${BINARY_NAME}-darwin
+endif
+endif
 
 build_run: build run
 
 clean:
 	go clean
-	${RM} ${BINARY_NAME}-darwin
-	${RM} ${BINARY_NAME}-linux
+ifeq (${OS}, Windows_NT)
 	${RM} ${BINARY_NAME}-windows.exe
+else
+ifeq ($(shell uname -s),Linux)
+	${RM} ${BINARY_NAME}-linux
+endif
+ifeq ($(shell uname -s),Darwin)
+	${RM} ${BINARY_NAME}-darwin
+endif
+endif
 	@echo "Cleaning ${BINARY_NAME}"
 
 test:

@@ -42,10 +42,11 @@ type Map struct {
 
 // Palette contains the transpalette
 type Palette struct {
-	Pack  *Packet
-	Name  string
-	X, Y  uint16
-	Carry bool
+	Pack    *Packet
+	Name    string
+	X, Y    uint16
+	Carry   bool
+	Command string
 }
 
 // Packet contains the packages
