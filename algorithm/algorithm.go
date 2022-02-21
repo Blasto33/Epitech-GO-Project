@@ -4,41 +4,44 @@ import (
 	"fmt"
 )
 
-type warehouseMap struct {
+// Map contains the warehouse map
+type Map struct {
 	NbIter uint32
 	X, Y   uint16
 }
 
-type palette struct {
-	Pack    *packet
+// Palette contains the transpalette
+type Palette struct {
+	Pack    *Packet
 	Name    string
-	Command string
 	X, Y    uint16
 	Carry   bool
+	Command string
 }
 
-type packet struct {
-	Name   string
-	Weight string
-	X, Y   uint16
+// Packet contains the packages
+type Packet struct {
+	Name, Color string
+	X, Y        uint16
 }
 
-type truck struct {
+// Truck contains the trucks elements
+type Truck struct {
 	Name                                 string
 	MaxContent, Content, Round, MaxRound uint32
 	X, Y                                 uint16
 }
 
 type algorithm struct {
-	Ware       warehouseMap
-	Listpal    []palette
-	Listpacket []packet
-	Listtruck  []truck
+	Ware       Map
+	Listpal    []Palette
+	ListPacket []Packet
+	ListTruck  []Truck
 	TwoDMap    [][]uint8
 }
 
-func remove(lis []packet, pack *packet) []packet {
-	dest := make([]packet, 0)
+func remove(lis []Packet, pack *Packet) []Packet {
+	dest := make([]Packet, 0)
 	for i := 0; i < len(lis); i++ {
 		if &lis[i] != pack {
 			dest = append(dest, lis[i])
@@ -57,7 +60,7 @@ func colorWeight(weight string) uint16 {
 	return 100
 }
 
-// isEmpty know if there is no more packet left
+// isEmpty know if there is no more Packet left
 func (a algorithm) isEmpty() bool {
 	for _, i := range a.TwoDMap {
 		for _, j := range i {
@@ -83,16 +86,16 @@ func (a algorithm) createMap() {
 	for _, pal := range a.Listpal {
 		a.TwoDMap[pal.Y][pal.X] = 1
 	}
-	for _, pack := range a.Listpacket {
+	for _, pack := range a.ListPacket {
 		a.TwoDMap[pack.X][pack.Y] = 2
 	}
-	for _, trk := range a.Listtruck {
+	for _, trk := range a.ListTruck {
 		a.TwoDMap[trk.X][trk.Y] = 3
 	}
 }
 
-func (a algorithm) findPacket(x uint16, y uint16) *packet {
-	for _, pack := range a.Listpacket {
+func (a algorithm) findPacket(x uint16, y uint16) *Packet {
+	for _, pack := range a.ListPacket {
 		if pack.X == x && pack.Y == y {
 			return &pack
 		}
@@ -115,8 +118,8 @@ func (a algorithm) makePalMove(palIndex int, destX uint16, destY uint16) bool {
 	return tmp == a.Listpal[palIndex]
 }
 
-func (a algorithm) gotopacket(palIndex int, packIndex int) {
-	var ptr *packet
+func (a algorithm) gotoPacket(palIndex int, packIndex int) {
+	var ptr *Packet
 	if a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y, a.Listpal[palIndex].X+1)
 	} else if a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 2 {
@@ -128,32 +131,32 @@ func (a algorithm) gotopacket(palIndex int, packIndex int) {
 		ptr = a.findPacket(a.Listpal[palIndex].Y-1, a.Listpal[palIndex].X)
 	}
 	if ptr == nil {
-		if !a.makePalMove(palIndex, a.Listpacket[packIndex].Y, a.Listpacket[packIndex].X) {
+		if !a.makePalMove(palIndex, a.ListPacket[packIndex].Y, a.ListPacket[packIndex].X) {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
 		} else {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
 		}
 	} else {
 		a.TwoDMap[ptr.X][ptr.Y] = 0
-		remove(a.Listpacket, ptr)
+		remove(a.ListPacket, ptr)
 		a.Listpal[palIndex].Carry = true
 		a.Listpal[palIndex].Pack = ptr
-		fmt.Printf("%s TAKE %s %s\n", a.Listpal[palIndex].Name, ptr.Name, ptr.Weight)
+		fmt.Printf("%s TAKE %s %s\n", a.Listpal[palIndex].Name, ptr.Name, ptr.Color)
 	}
 }
 
-// gototruck make the palette move to the truck
-func (a algorithm) gototruck(palIndex int, truckIndex int) {
-	if Abs(int(a.Listpal[palIndex].X)-int(a.Listtruck[truckIndex].X))+(Abs(int(a.Listpal[palIndex].Y)-int(a.Listtruck[truckIndex].Y))) == 1 {
-		if uint32(colorWeight(a.Listpal[palIndex].Pack.Weight)) > a.Listtruck[truckIndex].MaxContent-a.Listtruck[truckIndex].Content {
-			a.Listpal[palIndex].Command = fmt.Sprintf("%s LEAVE %s %s\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].Pack.Name, a.Listpal[palIndex].Pack.Weight)
+// gotoTruck make the Palette move to the Truck
+func (a algorithm) gotoTruck(palIndex int, truckIndex int) {
+	if Abs(int(a.Listpal[palIndex].X)-int(a.ListTruck[truckIndex].X))+(Abs(int(a.Listpal[palIndex].Y)-int(a.ListTruck[truckIndex].Y))) == 1 {
+		if uint32(colorWeight(a.Listpal[palIndex].Pack.Color)) > a.ListTruck[truckIndex].MaxContent-a.ListTruck[truckIndex].Content {
+			a.Listpal[palIndex].Command = fmt.Sprintf("%s LEAVE %s %s\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].Pack.Name, a.Listpal[palIndex].Pack.Color)
 			a.Listpal[palIndex].Pack = nil
 			a.Listpal[palIndex].Carry = false
 		} else {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
 		}
 	} else {
-		if !a.makePalMove(palIndex, a.Listtruck[truckIndex].X, a.Listtruck[truckIndex].Y) {
+		if !a.makePalMove(palIndex, a.ListTruck[truckIndex].X, a.ListTruck[truckIndex].Y) {
 			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
 		} else {
 			a.TwoDMap[a.Listpal[palIndex].X][a.Listpal[palIndex].Y] = 1
@@ -163,32 +166,32 @@ func (a algorithm) gototruck(palIndex int, truckIndex int) {
 }
 
 func (a algorithm) printTruck() {
-	for _, truck := range a.Listtruck {
-		if truck.Round > 0 {
-			truck.Round--
-			fmt.Printf("%s GONE %d/%d", truck.Name, truck.Content, truck.MaxContent)
-			if truck.Round == 0 {
-				truck.Content = 0
+	for _, Truck := range a.ListTruck {
+		if Truck.Round > 0 {
+			Truck.Round--
+			fmt.Printf("%s GONE %d/%d", Truck.Name, Truck.Content, Truck.MaxContent)
+			if Truck.Round == 0 {
+				Truck.Content = 0
 			}
 			continue
 		}
-		if (truck.MaxContent-truck.Content < 500 && truck.MaxContent > 500) || a.isEmpty() {
-			truck.Round = truck.MaxRound
-			fmt.Printf("%s GONE %d/%d", truck.Name, truck.Content, truck.MaxContent)
+		if (Truck.MaxContent-Truck.Content < 500 && Truck.MaxContent > 500) || a.isEmpty() {
+			Truck.Round = Truck.MaxRound
+			fmt.Printf("%s GONE %d/%d", Truck.Name, Truck.Content, Truck.MaxContent)
 		} else {
-			fmt.Printf("%s WAITING %d/%d", truck.Name, truck.Content, truck.MaxContent)
+			fmt.Printf("%s WAITING %d/%d", Truck.Name, Truck.Content, Truck.MaxContent)
 		}
 	}
 }
 
 func (a algorithm) printPal() {
 	move := make([]int, 0)
-	for packindex := 0; packindex < len(a.Listpacket); packindex++ {
+	for packindex := 0; packindex < len(a.ListPacket); packindex++ {
 		distance := a.Ware.X * a.Ware.Y
-		tmp := getPal(int(distance), a.Listpacket[packindex], a.Listpal)
+		tmp := getPal(int(distance), a.ListPacket[packindex], a.Listpal)
 		if tmp != -1 {
 			move = append(move, tmp)
-			a.gotopacket(tmp, packindex)
+			a.gotoPacket(tmp, packindex)
 		}
 	}
 	for palindex := 0; palindex < len(a.Listpal); palindex++ {
@@ -196,10 +199,10 @@ func (a algorithm) printPal() {
 			continue
 		}
 		distance := a.Ware.X * a.Ware.Y
-		tmp := getTruck(int(distance), a.Listpal[palindex], a.Listtruck)
+		tmp := getTruck(int(distance), a.Listpal[palindex], a.ListTruck)
 		if tmp != -1 {
 			move = append(move, tmp)
-			a.gototruck(palindex, tmp)
+			a.gotoTruck(palindex, tmp)
 		}
 	}
 	for palindex := 0; palindex < len(a.Listpal); palindex++ {
@@ -220,8 +223,8 @@ func Abs(value int) int {
 	return value
 }
 
-// getTruck get the closest truck of a palette
-func getTruck(distance int, pal palette, truckList []truck) int {
+// getTruck get the closest Truck of a Palette
+func getTruck(distance int, pal Palette, truckList []Truck) int {
 	ret := -1
 	for i := 0; i < len(truckList); i++ {
 		tmp := (Abs(int(pal.X) - int(truckList[i].X))) + (Abs(int(pal.Y) - int(truckList[i].Y)))
@@ -233,8 +236,8 @@ func getTruck(distance int, pal palette, truckList []truck) int {
 	return ret
 }
 
-// getPal get the closest palette of a packet
-func getPal(distance int, pack packet, listpal []palette) int {
+// getPal get the closest Palette of a Packet
+func getPal(distance int, pack Packet, listpal []Palette) int {
 	ret := -1
 	for i := 0; i < len(listpal); i++ {
 		if listpal[i].Carry {
@@ -259,8 +262,8 @@ func Find(slice []int, index int) bool {
 	return false
 }
 
-// executeAlgorithm Execute all the algorithm and write the output of the program
-func executeAlgorithm(warehouse warehouseMap) bool {
+// ExecuteAlgorithm Execute all the algorithm and write the output of the program
+func ExecuteAlgorithm(warehouse Map) bool {
 	algo := algorithm{Ware: warehouse, TwoDMap: make([][]uint8, warehouse.Y, warehouse.X)}
 	for i := 0; i < int(algo.Ware.NbIter); i++ {
 		algo.createMap()
