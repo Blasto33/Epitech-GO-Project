@@ -18,8 +18,9 @@ type palette struct {
 }
 
 type packet struct {
-	Name         string
-	X, Y, Weight uint16
+	Name   string
+	Weight string
+	X, Y   uint16
 }
 
 type truck struct {
@@ -47,13 +48,13 @@ func remove(lis []packet, pack *packet) []packet {
 }
 
 // colorWeight get the color to print with the weight
-func colorWeight(weight uint16) string {
-	if weight == 500 {
-		return "BLUE"
-	} else if weight == 200 {
-		return "GREEN"
+func colorWeight(weight string) uint16 {
+	if weight == "BLUE" {
+		return 500
+	} else if weight == "GREEN" {
+		return 200
 	}
-	return "YELLOW"
+	return 100
 }
 
 // isEmpty know if there is no more packet left
@@ -137,15 +138,15 @@ func (a algorithm) gotopacket(palIndex int, packIndex int) {
 		remove(a.Listpacket, ptr)
 		a.Listpal[palIndex].Carry = true
 		a.Listpal[palIndex].Pack = ptr
-		fmt.Printf("%s TAKE %s %s\n", a.Listpal[palIndex].Name, ptr.Name, colorWeight(ptr.Weight))
+		fmt.Printf("%s TAKE %s %s\n", a.Listpal[palIndex].Name, ptr.Name, ptr.Weight)
 	}
 }
 
 // gototruck make the palette move to the truck
 func (a algorithm) gototruck(palIndex int, truckIndex int) {
 	if Abs(int(a.Listpal[palIndex].X)-int(a.Listtruck[truckIndex].X))+(Abs(int(a.Listpal[palIndex].Y)-int(a.Listtruck[truckIndex].Y))) == 1 {
-		if uint32(a.Listpal[palIndex].Pack.Weight) > a.Listtruck[truckIndex].MaxContent-a.Listtruck[truckIndex].Content {
-			a.Listpal[palIndex].Command = fmt.Sprintf("%s LEAVE %s %s\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].Pack.Name, colorWeight(a.Listpal[palIndex].Pack.Weight))
+		if uint32(colorWeight(a.Listpal[palIndex].Pack.Weight)) > a.Listtruck[truckIndex].MaxContent-a.Listtruck[truckIndex].Content {
+			a.Listpal[palIndex].Command = fmt.Sprintf("%s LEAVE %s %s\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].Pack.Name, a.Listpal[palIndex].Pack.Weight)
 			a.Listpal[palIndex].Pack = nil
 			a.Listpal[palIndex].Carry = false
 		} else {
