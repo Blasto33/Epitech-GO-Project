@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	warehouse.ParseFile("file_empty.txt")
+	warehouse.ParseFile("file.txt")
 }

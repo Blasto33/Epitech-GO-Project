@@ -40,19 +40,19 @@ type Map struct {
 	X, Y   uint16
 }
 
-// Palette contains the transpalette
-type Palette struct {
-	Pack    *Packet
-	Name    string
-	X, Y    uint16
-	Carry   bool
-	Command string
-}
-
-// Packet contains the packages
+// Packet contains the packets
 type Packet struct {
 	Name, Color string
 	X, Y        uint16
+}
+
+// Palette contains the palettes
+type Palette struct {
+	Pack    *Packet
+	Name    string
+	Command string
+	X, Y    uint16
+	Carry   bool
 }
 
 // Truck contains the trucks elements
@@ -89,7 +89,7 @@ func GetMap(file []string) (wrh *Map) {
 // GetPackets parses the packages from the file
 func GetPackets(file []string) (pck []Packet) {
 	p := Packet{}
-	var packets []Packet
+	var packet []Packet
 
 	for i := 1; i < len(file); i++ {
 		packetsVar := strings.Fields(file[i])
@@ -113,20 +113,85 @@ func GetPackets(file []string) (pck []Packet) {
 
 			}
 		}
-		packets = append(packets, p)
+		packet = append(packet, p)
 	}
 
-	return packets
+	return packet
+}
+
+func GetPalettes(file []string) (plt []Palette) {
+	p := Palette{}
+	var palettes []Palette
+
+	for i := 1; i < len(file); i++ {
+		palettesVar := strings.Fields(file[i])
+		if len(palettesVar) == 3 {
+
+			p.Name = palettesVar[0]
+			for w := 1; w < 3; w++ {
+				value, err := strconv.Atoi(palettesVar[w])
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				switch w {
+				case 2:
+					p.X = uint16(value)
+				case 3:
+					p.Y = uint16(value)
+
+				}
+			}
+			palettes = append(palettes, p)
+		}
+	}
+	return palettes
+}
+
+func GetTrucks(file []string) (trk []Truck) {
+	p := Truck{}
+	var trucks []Truck
+
+	for i := 1; i < len(file); i++ {
+		trucksVar := strings.Fields(file[i])
+		if len(trucksVar) == 5 {
+
+			p.Name = trucksVar[0]
+			for w := 1; w < 5; w++ {
+				value, err := strconv.Atoi(trucksVar[w])
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				switch w {
+				case 1:
+					p.X = uint16(value)
+				case 2:
+					p.Y = uint16(value)
+				case 3:
+					p.MaxContent = uint32(value)
+				case 4:
+					p.MaxRound = uint32(value)
+				}
+			}
+			trucks = append(trucks, p)
+		}
+	}
+	return trucks
 }
 
 // ParseFile parses the entire file and returns a slice of structs
 func ParseFile(path string) {
 	file := readFile(path)
 
-	fmt.Println(file)
+	//fmt.Println(file)
 	//warehouse := GetMap(file)
 	//packets := GetPackets(file)
+	//palette := GetPalettes(file)
+	trucks := GetTrucks(file)
 
+	fmt.Println(trucks)
+	//fmt.Println(palette)
 	//fmt.Println(warehouse)
 	//fmt.Println(packets)
 }
