@@ -119,6 +119,7 @@ func GetPackets(file []string) (pck []Packet) {
 	return packet
 }
 
+// GetPalettes returns an array of palette structures
 func GetPalettes(file []string) (plt []Palette) {
 	p := Palette{}
 	var palettes []Palette
@@ -148,6 +149,7 @@ func GetPalettes(file []string) (plt []Palette) {
 	return palettes
 }
 
+// GetTrucks returns an array of truck structures
 func GetTrucks(file []string) (trk []Truck) {
 	p := Truck{}
 	var trucks []Truck
@@ -184,14 +186,5 @@ func GetTrucks(file []string) (trk []Truck) {
 func ParseFile(path string) {
 	file := readFile(path)
 
-	//fmt.Println(file)
-	//warehouse := GetMap(file)
-	//packets := GetPackets(file)
-	//palette := GetPalettes(file)
-	trucks := GetTrucks(file)
-
-	fmt.Println(trucks)
-	//fmt.Println(palette)
-	//fmt.Println(warehouse)
-	//fmt.Println(packets)
+	fmt.Println(file)
 }
