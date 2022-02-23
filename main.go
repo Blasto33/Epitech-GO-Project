@@ -2,13 +2,13 @@ package main
 
 import (
 	"epitech_go_project/algorithm"
-	. "fmt"
+	"fmt"
 )
 
 func main() {
 	if algorithm.ExecuteAlgorithm("file.txt") {
-		Printf("😎\n")
+		fmt.Printf("😎\n")
 	} else {
-		Printf("🙂\n")
+		fmt.Printf("🙂\n")
 	}
 }
