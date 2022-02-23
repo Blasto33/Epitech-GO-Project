@@ -2,7 +2,6 @@ package warehouse
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -110,12 +109,11 @@ func GetPackets(file []string) (pck []Packet) {
 				p.X = uint16(value)
 			case 3:
 				p.Y = uint16(value)
-
 			}
+
 		}
 		packet = append(packet, p)
 	}
-
 	return packet
 }
 
@@ -183,8 +181,8 @@ func GetTrucks(file []string) (trk []Truck) {
 }
 
 // ParseFile parses the entire file and returns a slice of structs
-func ParseFile(path string) {
+func ParseFile(path string) []string {
 	file := readFile(path)
 
-	fmt.Println(file)
+	return file
 }

@@ -1,9 +1,13 @@
 package main
 
 import (
-	"epitech_go_project/warehouse"
+	"epitech_go_project/algorithm"
+	. "fmt"
 )
 
 func main() {
-	warehouse.ParseFile("file.txt")
+	if algorithm.ExecuteAlgorithm("file.txt") {
+		Printf("yes")
+	}
+	Printf("no")
 }
