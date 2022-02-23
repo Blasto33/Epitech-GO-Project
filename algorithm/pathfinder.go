@@ -13,16 +13,6 @@ type algorithm struct {
 	TwoDMap    [][]uint16
 }
 
-func remove(lis []warehouse.Packet, pack *warehouse.Packet) []warehouse.Packet {
-	dest := make([]warehouse.Packet, 0)
-	for i := 0; i < len(lis); i++ {
-		if &lis[i] != pack {
-			dest = append(dest, lis[i])
-		}
-	}
-	return dest
-}
-
 // colorWeight get the color to print with the weight
 func colorWeight(weight string) uint16 {
 	if weight == "BLUE" {
@@ -34,7 +24,7 @@ func colorWeight(weight string) uint16 {
 }
 
 // isEmpty know if there is no more warehouse.Packet left
-func (a algorithm) isEmpty() bool {
+func (a *algorithm) isEmpty() bool {
 	for _, i := range a.TwoDMap {
 		for _, j := range i {
 			if j == 2 {
@@ -50,7 +40,7 @@ func (a algorithm) isEmpty() bool {
 	return true
 }
 
-func (a algorithm) createMap() {
+func (a *algorithm) createMap() {
 	for i := 0; i < int(a.Ware.Y); i++ {
 		for j := 0; j < int(a.Ware.X); j++ {
 			a.TwoDMap[i][j] = 0
@@ -60,7 +50,6 @@ func (a algorithm) createMap() {
 		a.TwoDMap[pal.Y][pal.X] = 1
 	}
 	for _, pack := range a.ListPacket {
-		fmt.Printf("\npack %d %d\n", pack.Y, pack.X)
 		a.TwoDMap[pack.Y][pack.X] = 2
 	}
 	for _, trk := range a.ListTruck {
@@ -68,7 +57,7 @@ func (a algorithm) createMap() {
 	}
 }
 
-func (a algorithm) findPacket(x uint16, y uint16) *warehouse.Packet {
+func (a *algorithm) findPacket(y uint16, x uint16) *warehouse.Packet {
 	for _, pack := range a.ListPacket {
 		if pack.X == x && pack.Y == y {
 			return &pack
@@ -77,14 +66,15 @@ func (a algorithm) findPacket(x uint16, y uint16) *warehouse.Packet {
 	return nil
 }
 
-func (a algorithm) makePalMove(palIndex int, destX uint16, destY uint16) bool {
+func (a *algorithm) makePalMove(palIndex int, destX uint16, destY uint16) bool {
 	tmpX := a.Listpal[palIndex].X
 	tmpY := a.Listpal[palIndex].Y
-	fmt.Printf("%d %d %d %d\n", tmpX, destX, tmpY, destY)
 	if (a.Listpal[palIndex].X < destX) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 0) {
 		a.Listpal[palIndex].X++
+		return false
 	} else if (a.Listpal[palIndex].Y < destY) && (a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 0) {
 		a.Listpal[palIndex].Y++
+		return false
 	}
 	if (a.Listpal[palIndex].X > destX) && (a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 0) {
 		a.Listpal[palIndex].X--
@@ -94,32 +84,49 @@ func (a algorithm) makePalMove(palIndex int, destX uint16, destY uint16) bool {
 	return tmpX == a.Listpal[palIndex].X && tmpY == a.Listpal[palIndex].Y
 }
 
-func (a algorithm) gotoPacket(palIndex int, packIndex int) {
+func indexFromPtr(lis []warehouse.Packet, ptr *warehouse.Packet) int {
+	for i := 0; i < len(lis); i++ {
+		if lis[i].X == ptr.X && lis[i].Y == ptr.Y {
+			return i
+		}
+	}
+	return 0
+}
+
+func (a *algorithm) commandPalette(palIndex int, packIndex int) {
+	if a.makePalMove(palIndex, a.ListPacket[packIndex].X, a.ListPacket[packIndex].Y) {
+		a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
+	} else {
+		a.TwoDMap[a.Listpal[palIndex].X][a.Listpal[palIndex].Y] = 1
+		a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
+	}
+}
+
+func (a *algorithm) removePacketIndex(i int) {
+	if len(a.ListPacket) == 1 {
+		a.ListPacket = make([]warehouse.Packet, 0)
+	} else {
+		a.ListPacket = append(a.ListPacket[:i], a.ListPacket[i+1:]...)
+	}
+}
+
+func (a *algorithm) gotoPacket(palIndex int, packIndex int) {
 	var ptr *warehouse.Packet
-	fmt.Printf("%d \n", packIndex)
-	if a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 2 {
-		fmt.Printf("right")
+	if int(a.Listpal[palIndex].X+1) < len(a.TwoDMap[0]) && a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X+1] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y, a.Listpal[palIndex].X+1)
-	} else if a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 2 {
-		fmt.Printf("up")
+	} else if int(a.Listpal[palIndex].Y+1) < len(a.TwoDMap) && a.TwoDMap[a.Listpal[palIndex].Y+1][a.Listpal[palIndex].X] == 2 {
 		ptr = a.findPacket(a.Listpal[palIndex].Y+1, a.Listpal[palIndex].X)
 	}
 	if a.Listpal[palIndex].X > 0 && a.TwoDMap[a.Listpal[palIndex].Y][a.Listpal[palIndex].X-1] == 2 {
-		fmt.Printf("left")
 		ptr = a.findPacket(a.Listpal[palIndex].Y, a.Listpal[palIndex].X-1)
 	} else if a.Listpal[palIndex].Y > 0 && a.TwoDMap[a.Listpal[palIndex].Y-1][a.Listpal[palIndex].X] == 2 {
-		fmt.Printf("down")
 		ptr = a.findPacket(a.Listpal[palIndex].Y-1, a.Listpal[palIndex].X)
 	}
 	if ptr == nil {
-		if a.makePalMove(palIndex, a.ListPacket[packIndex].X, a.ListPacket[packIndex].Y) {
-			a.Listpal[palIndex].Command = fmt.Sprintf("%s WAIT\n", a.Listpal[palIndex].Name)
-		} else {
-			a.Listpal[palIndex].Command = fmt.Sprintf("%s GO [%d,%d]\n", a.Listpal[palIndex].Name, a.Listpal[palIndex].X, a.Listpal[palIndex].Y)
-		}
+		a.commandPalette(palIndex, packIndex)
 	} else {
 		a.TwoDMap[ptr.X][ptr.Y] = 0
-		remove(a.ListPacket, ptr)
+		a.removePacketIndex(indexFromPtr(a.ListPacket, ptr))
 		a.Listpal[palIndex].Carry = true
 		a.Listpal[palIndex].Pack = ptr
 		fmt.Printf("%s TAKE %s %s\n", a.Listpal[palIndex].Name, ptr.Name, ptr.Color)
@@ -127,7 +134,7 @@ func (a algorithm) gotoPacket(palIndex int, packIndex int) {
 }
 
 // gotoTruck make the Palette move to the Truck
-func (a algorithm) gotoTruck(palIndex int, truckIndex int) {
+func (a *algorithm) gotoTruck(palIndex int, truckIndex int) {
 	if Abs(int(a.Listpal[palIndex].X)-int(a.ListTruck[truckIndex].X))+(Abs(int(a.Listpal[palIndex].Y)-int(a.ListTruck[truckIndex].Y))) == 1 {
 		if uint32(colorWeight(a.Listpal[palIndex].Pack.Color)) < a.ListTruck[truckIndex].MaxContent-a.ListTruck[truckIndex].Content {
 			a.ListTruck[truckIndex].Content += uint32(colorWeight(a.Listpal[palIndex].Pack.Color))
@@ -147,7 +154,7 @@ func (a algorithm) gotoTruck(palIndex int, truckIndex int) {
 	}
 }
 
-func (a algorithm) printTruck() {
+func (a *algorithm) printTruck() {
 	for _, Truck := range a.ListTruck {
 		if Truck.Round > 0 {
 			Truck.Round--
@@ -166,7 +173,7 @@ func (a algorithm) printTruck() {
 	}
 }
 
-func (a algorithm) printPal() {
+func (a *algorithm) printPal() {
 	move := make([]int, 0)
 	for packindex := 0; packindex < len(a.ListPacket); packindex++ {
 		distance := a.Ware.X * a.Ware.Y
@@ -259,17 +266,11 @@ func ExecuteAlgorithm(path string) bool {
 	algo := algorithm{Ware: tmp, Listpal: warehouse.GetPalettes(content), ListPacket: warehouse.GetPackets(content), ListTruck: warehouse.GetTrucks(content), TwoDMap: initMap(tmp.X, tmp.Y)}
 	for i := 0; i < int(algo.Ware.NbIter); i++ {
 		algo.createMap()
-		for y := 0; y < int(algo.Ware.Y); y++ {
-			for x := 0; x < int(algo.Ware.X); x++ {
-				fmt.Printf("%d", algo.TwoDMap[y][x])
-			}
-			fmt.Printf("\n")
-		}
 		fmt.Printf("tour %d\n", i+1)
-		fmt.Printf("\n")
 		algo.printPal()
 		algo.printTruck()
+		fmt.Printf("\n")
 	}
-	fmt.Printf("\n")
+
 	return algo.isEmpty()
 }

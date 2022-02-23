@@ -8,6 +8,7 @@ import (
 func main() {
 	if algorithm.ExecuteAlgorithm("file.txt") {
 		Printf("yes")
+	} else {
+		Printf("no")
 	}
-	Printf("no")
 }

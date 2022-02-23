@@ -105,9 +105,9 @@ func GetPackets(file []string) (pck []Packet) {
 			}
 
 			switch w {
-			case 2:
+			case 1:
 				p.X = uint16(value)
-			case 3:
+			case 2:
 				p.Y = uint16(value)
 			}
 
