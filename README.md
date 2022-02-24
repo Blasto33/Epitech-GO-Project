@@ -14,8 +14,8 @@ A Go project made for Epitech.
 
 ### Architecture
 
-![C4 Diagram](https://i.imgur.com/LgMGKNu.png)
-
 ### Strategy
 
 ### Component Diagram
+
+![C4 Diagram](https://i.imgur.com/LgMGKNu.png)
