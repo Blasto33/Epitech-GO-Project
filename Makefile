@@ -1,7 +1,7 @@
 BINARY_NAME=Go_Project
 
 
-ifdef OS
+ifeq (${OS}, Windows_NT)
    RM = del /Q
    FixPath = $(subst /,\,$1)
 else

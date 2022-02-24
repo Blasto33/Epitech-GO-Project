@@ -10,11 +10,15 @@ import (
 
 func readFile(path string) []string {
 	s := []string{}
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal("err")
-	}
 
+	file, err := os.Open(path)
+	if err != nil || os.IsNotExist(err) {
+		log.Fatal("😱 Could'nt open file or the file doesn't exist")
+	}
+	fi, err := file.Stat()
+	if err != nil || fi.Size() == 0 {
+		log.Fatal("😱 error it's an empty file")
+	}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		if scanner.Text() == "" {
