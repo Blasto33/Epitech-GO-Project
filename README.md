@@ -15,6 +15,9 @@ A Go project made for Epitech.
 
 ### Architecture
 
+We got a package for parsing and a package for algorithm.
+The algorithm will call the package who parse to execute it and get the info that he wants.
+
 ### Strategy
 
 For each packet, we are looking for the closest palette. The palette will move to the packet but if she finds another packet on her way, she will take it instead of the original one.
