@@ -15,8 +15,8 @@ A Go project made for Epitech.
 
 ### Architecture
 
-We got a package for parsing and a package for algorithm.
-The algorithm will call the package who parse to execute it and get the info that he wants.
+We got a package for the parsing and a package for the algorithm.
+The algorithm will call the package which parses to execute it and get the infos it needs.
 
 ### Strategy
 
@@ -26,4 +26,4 @@ The truck leave only if he can't take a blue packet anymore (500) or if there is
 
 ### Component Diagram
 
-![C4 Diagram](https://i.imgur.com/LgMGKNu.png)
+![C4 Diagram](https://i.imgur.com/Ds5ghU9.png)
