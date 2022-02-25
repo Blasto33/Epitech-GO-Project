@@ -17,6 +17,10 @@ A Go project made for Epitech.
 
 ### Strategy
 
+For each packet, we are looking for the closest palette. The palette will move to the packet but if she finds another packet on her way, she will take it instead of the original one.
+Then each palette with a packet is looking for the closest truck. They will wait near the truck if he's gone.
+The truck leave only if he can't take a blue packet anymore (500) or if there is no packet left.
+
 ### Component Diagram
 
 ![C4 Diagram](https://i.imgur.com/LgMGKNu.png)
